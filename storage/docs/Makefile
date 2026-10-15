@@ -1,4 +1,5 @@
 GOMD2MAN ?= $(shell command -v go-md2man || echo '$(GOBIN)/go-md2man')
+SED ?= sed
 PREFIX ?= ${DESTDIR}/usr
 MANINSTALLDIR=${PREFIX}/share/man
 MANPAGES_MD = $(wildcard docs/*.5.md)
@@ -7,11 +8,12 @@ MANPAGES ?= $(MANPAGES_MD:%.md=%)
 .PHONY: docs
 docs: $(patsubst %.md,%.1,$(filter-out %.5.md,$(wildcard *.md))) containers-storage.conf.5
 
+# Man pages have no link mechanism: turn [text](other-page.md) into plain text.
 %.1: %.md
-	$(GOMD2MAN) -in $^ -out $@
+	$(SED) -E -e 's/\[([^]]*)\]\([^):]*\.md(#[^)]*)?\)/\1/g' $^ | $(GOMD2MAN) -out $@
 
 containers-storage.conf.5: containers-storage.conf.5.md
-	$(GOMD2MAN) -in $^ -out $@
+	$(SED) -E -e 's/\[([^]]*)\]\([^):]*\.md(#[^)]*)?\)/\1/g' $^ | $(GOMD2MAN) -out $@
 
 .PHONY: install
 install:

@@ -24,6 +24,7 @@ SOURCE_DIRS = $(shell echo $(PACKAGES) | awk 'BEGIN{FS="/"; RS=" "}{print $$4}' 
 PREFIX ?= ${DESTDIR}/usr
 MANINSTALLDIR=${PREFIX}/share/man
 GOMD2MAN ?= $(shell command -v go-md2man || echo '$(GOBIN)/go-md2man')
+SED ?= sed
 MANPAGES_MD = $(wildcard docs/*.5.md)
 MANPAGES ?= $(MANPAGES_MD:%.md=%)
 
@@ -43,8 +44,9 @@ all: test lint
 build:
 	go build $(BUILDFLAGS) ./...
 
+# Man pages have no link mechanism: turn [text](other-page.md) into plain text.
 $(MANPAGES): %: %.md
-	$(GOMD2MAN) -in $< -out $@
+	$(SED) -E -e 's/\[([^]]*)\]\([^):]*\.md(#[^)]*)?\)/\1/g' $< | $(GOMD2MAN) -out $@
 
 docs: $(MANPAGES)
 
